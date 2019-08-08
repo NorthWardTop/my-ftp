@@ -10,9 +10,16 @@
 #include "common.h"
 #include "sysutil.h"
 #include "session.h"
+#include "str.h"
+#include "parseconf.h"
+#include "tunable.h"
 
 int main(int argc, char const *argv[])
 {
+	parseconf_load_file("my-ftp.conf");
+	printf("pasv=%d\n", tunable_accept_timeout);
+	//变量解析失败
+
 
 	if (getuid() != 0)
 		ERR_EXIT("my-ftp: must be started as root!");
@@ -29,7 +36,7 @@ int main(int argc, char const *argv[])
 	};
 	int conn;
 	int pid;
-	int listenfd = tcp_server(NULL, 5888);
+	int listenfd = tcp_server(NULL, PORT);
 	while (1) {
 		conn = accept_timeout(listenfd, NULL, 0);
 		if (conn < 0)

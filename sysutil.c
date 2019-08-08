@@ -3,7 +3,7 @@
  * @Github: https://github.com/northwardtop
  * @Date: 2019-07-20 22:47:47
  * @LastEditors: northward
- * @LastEditTime: 2019-07-21 23:22:06
+ * @LastEditTime: 2019-07-23 00:34:46
  * @Description: 对sysutil的实现
  */
 
@@ -89,7 +89,7 @@ int accept_timeout(int fd, struct sockaddr_in *addr, unsigned int wait_seconds)
 		struct timeval timeout;
 		FD_ZERO(&accfd_set);
 		FD_SET(fd, &accfd_set);
-		do { 
+		do {
 			ret = select(fd + 1, &accfd_set, NULL, NULL, &timeout);
 		} while (ret < 0 && errno == EINTR); //发生系统调用中断
 		if (ret == -1)
@@ -97,7 +97,7 @@ int accept_timeout(int fd, struct sockaddr_in *addr, unsigned int wait_seconds)
 		else if (ret == 0) {
 			errno = ETIMEDOUT;
 			return -1;
-		} 
+		}
 	}
 	//不设定超时默认直接使用accept
 	if (addr != NULL)
@@ -110,7 +110,27 @@ int accept_timeout(int fd, struct sockaddr_in *addr, unsigned int wait_seconds)
 
 int connect_timeout(int fd, struct sockaddr_in *addr, unsigned int wait_seconds);
 
-ssize_t readn(int fd, void *buf, size_t count);
+//读取n字节
+ssize_t readn(int fd, void *buf, size_t count)
+{
+	size_t nleft = count;
+	ssize_t nread;
+	char *bufp = (char*)buf;
+
+	while (nleft > 0) {
+		if ((nread = read(fd, bufp, nleft)) < 0) {
+			if (errno == EINTR)
+				continue;
+			return -1;
+		} else if (nread == 0)
+			return count - nleft;
+		bufp +=nread;
+		nleft -= nread;
+	}
+	return count;
+}
+
+
 /**
  * @description: 
  * @param {type} 
@@ -119,11 +139,10 @@ ssize_t readn(int fd, void *buf, size_t count);
 ssize_t writen(int fd, const void *buf, size_t count)
 {
 	size_t nleft = count;
-	char *bufp = buf;
+	char *bufp = (char*)buf;
 	size_t written = 0;
 
-	while (nleft > 0)
-	{
+	while (nleft > 0) {
 		written = write(fd, bufp, nleft);
 		if (written < 0) {
 			if (errno == EINTR)
@@ -137,16 +156,52 @@ ssize_t writen(int fd, const void *buf, size_t count)
 	return count;
 }
 
-ssize_t recv_peek(int sockfd, void *buf, size_t len);
+//读取数据但端口不移除,下次依然可以读取
+ssize_t recv_peek(int sockfd, void *buf, size_t len)
+{
+	while (1) {
+		int ret = recv(sockfd, buf, len, MSG_PEEK);
+		if (ret < 0 && errno == EINTR)
+			continue;
+		return ret;
+	}
+}
 
 /**
- * @description: 
- * @param {type} 
- * @return: 
+ * @description: 按行读取数据
+ * @param {套接字,接受缓冲区,一行最大长度} 
+ * @return: 失败返回-1
  */
 ssize_t readline(int sockfd, void *buf, size_t maxline)
 {
-	return 0;
+	int ret, nread, nleft = maxline;
+	char *bufp = buf;
+	while (1)
+	{
+		//读取数据但端口不移除,下次依然可以读取
+		ret = recv_peek(sockfd, bufp, nleft);
+		if (ret <= 0)
+			return ret;
+		
+		nread = ret;
+		int i;
+		for (i = 0; i < nread; ++i) {
+			if (bufp[i] == '\n') {
+				ret = readn(sockfd, bufp, i+1); //真正的读取
+				if (ret != i+1)
+					ERR_EXIT("read failed for readline!");
+				return ret;
+			}
+		}
+		if (nread > nleft)
+			ERR_EXIT("out of read range!");
+		nleft -= nread;
+		ret = readn(sockfd, bufp, nread);
+		if (ret != nread)
+			ERR_EXIT("read failed!");
+		bufp += nread;
+	}
+	return -1;
 }
 
 void send_fd(int sock_fd, int fd);

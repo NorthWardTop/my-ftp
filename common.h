@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #define ERR_EXIT(m)                                                            \
   do {                                                                         \
@@ -43,6 +44,8 @@
     exit(EXIT_FAILURE);                                                        \
   } while (0)
 
+
+#define PORT		5888
 #define MAX_CMD_LINE 1024
 #define MAX_CMD 32
 #define MAX_ARG 1024

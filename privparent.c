@@ -9,16 +9,15 @@
 
 #include "session.h"
 #include "privparent.h"
+#include <unistd.h>
 
 void handle_parent(session_t* sess)
 {
-	while (1)
-	{
-
-		//read(sess->parent_fd, buf, &cmd, 1);
+	char cmd;
+	while (1) {
+		read(sess->parent_fd, &cmd, 1);
 		//解析命令,处理命令,内部命令,非ftp协议命令
 		
-
 	}
 	
 }
