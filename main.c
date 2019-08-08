@@ -16,10 +16,9 @@
 
 int main(int argc, char const *argv[])
 {
-	parseconf_load_file("my-ftp.conf");
-	printf("pasv=%d\n", tunable_accept_timeout);
+	
 	//变量解析失败
-
+	print_all_conf("my-ftp.conf");
 
 	if (getuid() != 0)
 		ERR_EXIT("my-ftp: must be started as root!");

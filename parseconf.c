@@ -57,13 +57,15 @@ void parseconf_load_file(const char * path)
 	FILE *fp = fopen(path, "r");
 	if (fp == NULL)
 		ERR_EXIT("open config file failed!");
+	
 	char setting_line[1024] = "\0";
 	//??????????
 	while (fgets(setting_line, sizeof(setting_line), fp) != NULL) {
 		if (strlen(setting_line) == 0	\
 			|| setting_line[0] == '#'	\
-			|| str_all_space(setting_line))
-			continue;
+			|| str_all_space(setting_line)) {
+				continue;
+		}
 		str_trim_crlf(setting_line); //???/r/n
 		parseconf_load_setting(setting_line); //???��????????
 		memset(setting_line, 0, sizeof(setting_line)); //??????
@@ -132,7 +134,26 @@ void parseconf_load_setting(const char * setting)
 	
 }
 
-void print_all_conf()
+void print_all_conf(const char *file)
 {
-	
+	parseconf_load_file(file);
+	printf("tunable_pasv_enable=%d\n", tunable_pasv_enable);
+	printf("tunable_port_enable=%d\n", tunable_port_enable);
+
+	printf("tunable_listen_port=%u\n", tunable_listen_port);
+	printf("tunable_max_clients=%u\n", tunable_max_clients);
+	printf("tunable_max_per_ip=%u\n", tunable_max_per_ip);
+	printf("tunable_accept_timeout=%u\n", tunable_accept_timeout);
+	printf("tunable_connect_timeout=%u\n", tunable_connect_timeout);
+	printf("tunable_idle_session_timeout=%u\n", tunable_idle_session_timeout);
+	printf("tunable_data_connection_timeout=%u\n", tunable_data_connection_timeout);
+	printf("tunable_local_umask=%u\n", tunable_local_umask);
+	printf("tunable_upload_max_rate=%u\n", tunable_upload_max_rate);
+	printf("tunable_download_max_rate=%u\n", tunable_download_max_rate);
+
+	printf("tunable_listen_address=%s\n", tunable_listen_address);
 }
+
+
+
+
